@@ -33,6 +33,9 @@ RUN useradd -G www-data,root -u 1000 -d /home/rssuser rssuser
 RUN mkdir -p /home/rssuser/.composer && \
     chown -R rssuser:rssuser /home/rssuser
 
+# Change ownership of /var/www to allow rssuser to create directories
+RUN chown -R rssuser:rssuser /var/www
+
 # Set user
 USER rssuser
 
