@@ -1,0 +1,101 @@
+version: '3.8'
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+    container_name: rss_reader_app
+    restart: unless-stopped
+    working_dir: /var/www
+    volumes:
+      - ./:/var/www
+      - ./docker/php/local.ini:/usr/local/etc/php/conf.d/local.ini
+    networks:
+      - rss_reader_network
+    depends_on:
+      - db
+      - redis
+
+  nginx:
+    image: nginx:alpine
+    container_name: rss_reader_nginx
+    restart: unless-stopped
+    ports:
+      - "8080:80"
+    volumes:
+      - ./:/var/www
+      - ./docker/nginx/conf.d:/etc/nginx/conf.d
+    networks:
+      - rss_reader_network
+    depends_on:
+      - app
+
+  db:
+    image: mysql:8.0
+    container_name: rss_reader_db
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: rss_reader
+      MYSQL_ROOT_PASSWORD: secret
+      MYSQL_USER: rss_user
+      MYSQL_PASSWORD: secret
+    ports:
+      - "3306:3306"
+    volumes:
+      - dbdata:/var/lib/mysql
+    networks:
+      - rss_reader_network
+
+  redis:
+    image: redis:alpine
+    container_name: rss_reader_redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    networks:
+      - rss_reader_network
+
+  queue:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+    container_name: rss_reader_queue
+    restart: unless-stopped
+    working_dir: /var/www
+    command: php artisan queue:work --sleep=3 --tries=3
+    volumes:
+      - ./:/var/www
+    networks:
+      - rss_reader_network
+    depends_on:
+      - db
+      - redis
+
+  scheduler:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+    container_name: rss_reader_scheduler
+    restart: unless-stopped
+    working_dir: /var/www
+    command: >
+      sh -c "while true; do
+        php artisan schedule:run --verbose --no-interaction &
+        sleep 60
+      done"
+    volumes:
+      - ./:/var/www
+    networks:
+      - rss_reader_network
+    depends_on:
+      - db
+      - redis
+
+networks:
+  rss_reader_network:
+    driver: bridge
+
+volumes:
+  dbdata:
+    driver: local
