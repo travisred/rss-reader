@@ -36,6 +36,9 @@ RUN mkdir -p /home/rssuser/.composer && \
 # Set user
 USER rssuser
 
+# Configure git to allow /var/www directory (fixes ownership warnings)
+RUN git config --global --add safe.directory /var/www
+
 # Expose port 9000 and start php-fpm server
 EXPOSE 9000
 CMD ["php-fpm"]
