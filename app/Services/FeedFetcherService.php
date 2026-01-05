@@ -241,19 +241,19 @@ class FeedFetcherService
 
     public function fetchAllFeeds(): void
     {
-        $feeds = Feed::where('is_active', true)
+        Feed::where('is_active', true)
             ->where(function ($query) {
                 $query->whereNull('last_fetched_at')
                     ->orWhereRaw('last_fetched_at + INTERVAL fetch_interval MINUTE <= NOW()');
             })
-            ->get();
-
-        foreach ($feeds as $feed) {
-            try {
-                $this->fetchFeed($feed);
-            } catch (\Exception $e) {
-                \Log::error("Failed to fetch feed {$feed->id}: {$e->getMessage()}");
-            }
-        }
+            ->chunk(10, function ($feeds) {
+                foreach ($feeds as $feed) {
+                    try {
+                        $this->fetchFeed($feed);
+                    } catch (\Exception $e) {
+                        \Log::error("Failed to fetch feed {$feed->id}: {$e->getMessage()}");
+                    }
+                }
+            });
     }
 }

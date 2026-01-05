@@ -16,6 +16,7 @@ services:
     depends_on:
       - db
       - redis
+    mem_limit: 256m
 
   nginx:
     image: nginx:alpine
@@ -30,6 +31,7 @@ services:
       - rss_reader_network
     depends_on:
       - app
+    mem_limit: 32m
 
   db:
     image: mysql:8.0
@@ -46,6 +48,7 @@ services:
       - dbdata:/var/lib/mysql
     networks:
       - rss_reader_network
+    mem_limit: 400m
 
   redis:
     image: redis:alpine
@@ -55,6 +58,7 @@ services:
       - "6379:6379"
     networks:
       - rss_reader_network
+    mem_limit: 64m
 
   queue:
     build:
@@ -63,7 +67,7 @@ services:
     container_name: rss_reader_queue
     restart: unless-stopped
     working_dir: /var/www
-    command: php artisan queue:work --sleep=3 --tries=3
+    command: php artisan queue:work --sleep=3 --tries=3 --max-jobs=100 --max-time=3600
     volumes:
       - ./:/var/www
     networks:
@@ -71,6 +75,7 @@ services:
     depends_on:
       - db
       - redis
+    mem_limit: 128m
 
   scheduler:
     build:
@@ -91,6 +96,7 @@ services:
     depends_on:
       - db
       - redis
+    mem_limit: 64m
 
 networks:
   rss_reader_network:
