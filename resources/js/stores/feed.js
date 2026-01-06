@@ -91,11 +91,19 @@ export const useFeedStore = defineStore('feed', {
         },
 
         async markAsRead(itemId) {
-            await axios.post(`/items/${itemId}/read`);
+            // Optimistically update UI immediately
             const item = this.items.find(i => i.id === itemId);
             if (item && item.user_items && item.user_items[0]) {
                 item.user_items[0].is_read = true;
             }
+            if (this.currentItem?.id === itemId) {
+                if (this.currentItem.user_items && this.currentItem.user_items[0]) {
+                    this.currentItem.user_items[0].is_read = true;
+                }
+            }
+
+            // Then update backend
+            await axios.post(`/items/${itemId}/read`);
             await this.fetchFeeds(); // Update unread counts
         },
 

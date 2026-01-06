@@ -327,9 +327,10 @@ const selectFeed = (feed) => {
 };
 
 const selectItem = async (item) => {
+  // fetchItem automatically marks as read on the backend
   await feedStore.fetchItem(item.id);
-  // Automatically mark as read when viewing
-  await feedStore.markAsRead(item.id);
+  // Update feed counts after marking as read
+  await feedStore.fetchFeeds();
   // On mobile, show content after selecting item
   mobileView.value = 'content';
 };

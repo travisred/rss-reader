@@ -66,6 +66,7 @@ class FeedItemController extends Controller
         $userItem = $feedItem->userItems->first();
         if ($userItem && !$userItem->is_read) {
             $userItem->markAsRead();
+            // Reload the relationship to get updated data
         } elseif (!$userItem) {
             // Create user item if it doesn't exist
             $userItem = UserFeedItem::create([
@@ -75,7 +76,9 @@ class FeedItemController extends Controller
                 'read_at' => now(),
             ]);
         }
-
+        $feedItem->load(['userItems' => function ($q) use ($request) {
+            $q->where('user_id', $request->user()->id);
+        }]);
         return response()->json($feedItem);
     }
 
