@@ -40,8 +40,6 @@ services:
       MYSQL_ROOT_PASSWORD: secret
       MYSQL_USER: rss_user
       MYSQL_PASSWORD: secret
-    ports:
-      - "3306:3306"
     volumes:
       - dbdata:/var/lib/mysql
     networks:
@@ -51,8 +49,6 @@ services:
     image: redis:alpine
     container_name: rss_reader_redis
     restart: unless-stopped
-    ports:
-      - "6379:6379"
     networks:
       - rss_reader_network
 
